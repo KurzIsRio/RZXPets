@@ -44,6 +44,7 @@
 
 ## 🛠️ Requirements & Integrations
 
+*   **RZXCore** (Required central framework dependency)
 *   **Spigot / Paper 1.20.4+**
 *   **PlaceholderAPI** (Required for balance rendering and hooks)
 *   **ExcellentEconomy** (Supported zGems currency ecosystem)
