@@ -1,0 +1,23 @@
+# Custom Proprietary License Agreement (All Rights Reserved)
+
+Copyright (c) 2026 KurzIsRio. All rights reserved.
+
+By downloading, viewing, compiling, using, or interacting with the source code or binary distributions of **RZXPets**, you agree to the following terms and conditions:
+
+## 1. Proprietary Rights & Ownership
+All intellectual property rights, ownership, titles, and interests in and to **RZXPets** (including but not limited to the source code, compiled binaries, assets, algorithms, configurations, and documentation) are and shall remain the exclusive property of the original author (**KurzIsRio**).
+
+## 2. Permitted Use
+You are granted a non-exclusive, non-transferable, revocable license to:
+*   Use compiled binaries of **RZXPets** privately on your own Minecraft server(s).
+*   Modify or customize the source code exclusively for personal, private, non-commercial use on your own Minecraft server(s).
+
+## 3. Strict Restrictions & Prohibitions
+To prevent unauthorized distribution, copying, and commercial exploitation, the following actions are strictly prohibited without prior written consent from the author:
+*   **No Commercial Use:** You may not sell, rent, lease, sub-license, monetize, or otherwise use the source code, binaries, or any derivative works of **RZXPets** to gain profit, generate revenue, or achieve financial advantage.
+*   **No Redistribution:** You may not copy, publish, distribute, share, host on public repositories (other than private forks authorized by the owner), or otherwise make the source code or compiled binaries available to any third party.
+*   **No Derivative Sales:** You may not use any parts of this plugin's code to create, compile, or distribute competitive products, modified versions, or derivative plugins for sale or public distribution.
+*   **No Attribution Removal:** You may not remove, obscure, or alter any copyright notices, credits, license details, or author attributions contained in the source files.
+
+## 4. Disclaimer of Warranty
+THIS SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES, OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.

@@ -73,13 +73,14 @@
             <version>7.3.0</version>
             <scope>provided</scope>
         </dependency>
-        <!-- RZXCore Framework -->
+        <!-- RZXCore Framework
         <dependency>
             <groupId>com.rzx</groupId>
             <artifactId>core</artifactId>
             <version>1.0.0-SNAPSHOT</version>
             <scope>provided</scope>
         </dependency>
+        -->
         <!-- bStats -->
         <dependency>
             <groupId>org.bstats</groupId>
