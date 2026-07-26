@@ -1,0 +1,10 @@
+# Custom Mechanic Template - XP Booster
+enabled: true
+name: "&a&lEnlightenment"
+description:
+  - "&7Increases vanilla XP gained."
+  - "&7Current Boost: &a+%multiplier%%"
+type: "xp-booster"
+base-multiplier: 1.0
+level-modifier: 0.01
+min-level: 5

@@ -1,0 +1,13 @@
+# Custom Mechanic Template - Lifesteal
+enabled: true
+name: "&4&lSoul Feast"
+description:
+  - "&7Chance to heal on dealing damage."
+  - "&7Current Trigger Chance: &c%chance%%"
+  - "&7Current Healing: &c%percent%% of damage dealt"
+type: "lifesteal"
+base-chance: 0.05
+level-modifier: 0.002
+base-percent: 0.05
+percent-modifier: 0.0015
+min-level: 10

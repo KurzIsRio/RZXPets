@@ -1,0 +1,15 @@
+# Custom Mechanic Template - Area Heal
+enabled: true
+name: "&a&lRejuvenating Mist"
+description:
+  - "&7Periodically heals player and nearby allies."
+  - "&7Current Healing: &a%heal% HP"
+  - "&7Current Radius: &a%radius% blocks"
+  - "&7Current Interval: &a%cooldown%s"
+type: "area-heal"
+base-heal: 1.0
+heal-modifier: 0.04
+radius: 3.0
+base-cooldown: 30.0
+cooldown-modifier: 0.15
+min-level: 10

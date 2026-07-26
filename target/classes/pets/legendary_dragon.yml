@@ -1,0 +1,59 @@
+# Legendary Dragon Companion Pet Configuration
+enabled: true
+name: "&c&lLegendary Dragon"
+entity-type: PHANTOM
+custom-model-data: 1001
+
+description:
+  - "&7A legendary companion dragon with all 10 custom skills."
+
+mechanics:
+  # 1. Custom health link (loads from mechanics/health.yml)
+  - type: custom
+    mechanic-id: health
+    min-level: 1
+
+  # 2. Custom flight ascension (loads from mechanics/flight.yml)
+  - type: custom
+    mechanic-id: flight
+    min-level: 100
+
+  # 3. Custom mining gems booster (loads from mechanics/mining_gems.yml)
+  - type: custom
+    mechanic-id: mining_gems
+    min-level: 5
+
+  # 4. Custom combat gems bounty (loads from mechanics/combat_gems.yml)
+  - type: custom
+    mechanic-id: combat_gems
+    min-level: 5
+
+  # 5. Custom XP booster (loads from mechanics/xp_booster.yml)
+  - type: custom
+    mechanic-id: xp_booster
+    min-level: 10
+
+  # 6. Custom damage shield (loads from mechanics/shield.yml)
+  - type: custom
+    mechanic-id: shield
+    min-level: 15
+
+  # 7. Custom lifesteal (loads from mechanics/lifesteal.yml)
+  - type: custom
+    mechanic-id: lifesteal
+    min-level: 20
+
+  # 8. Custom double drops (loads from mechanics/double_drops.yml)
+  - type: custom
+    mechanic-id: double_drops
+    min-level: 25
+
+  # 9. Custom combat attack (loads from mechanics/combat_attack.yml)
+  - type: custom
+    mechanic-id: combat_attack
+    min-level: 1
+
+  # 10. Custom area heal (loads from mechanics/area_heal.yml)
+  - type: custom
+    mechanic-id: area_heal
+    min-level: 30

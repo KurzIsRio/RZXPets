@@ -1,0 +1,152 @@
+# =====================================================================
+#             RZXPets - Custom Pet Upgrades & Storage Limits
+# =====================================================================
+# Opened via /pets or /pet.
+# =====================================================================
+
+enabled: true
+
+# Border Filler Configuration
+filler:
+  enabled: true
+  border-material: BLACK_STAINED_GLASS_PANE
+  empty-material: ORANGE_STAINED_GLASS_PANE
+
+main-menu:
+  enabled: true
+  slot: 24
+  material: ANVIL
+  name: "&#FFAA00&lPET UPGRADES & LIMITS"
+  lore:
+    - "&7Level up your summoned pets with XP"
+    - "&7or upgrade your total storage capacity."
+    - "&8&m-------------------------------------"
+    - "&cRequires owning at least 1 pet."
+    - "&b▸ Click to open Upgrades"
+
+title: "&#FFAA00&l« &f&lPET UPGRADES & LIMITS &#FFAA00&l»"
+size: 45
+
+items:
+  # ==================== SKILLTREE & XP UPGRADES ====================
+
+  'buy_xp_small':
+    material: EXPERIENCE_BOTTLE
+    slot: 10
+    name: "&d&lBuy +1,000 Pet XP"
+    lore:
+      - "&7Instantly gives 1,000 experience points"
+      - "&7to your currently active summoned pet!"
+      - "&8&m-------------------------------------"
+      - "&7Price: &a500 zGems"
+      - "&7Your Balance: &f%excellenteconomy_balance_zgems%"
+      - "&8&m-------------------------------------"
+      - "&eClick to buy XP!"
+    price: 500
+    currency: "zGems"
+    action: "addxp active 1000"
+
+  'buy_xp_large':
+    material: DRAGON_BREATH
+    slot: 12
+    name: "&5&lBuy +10,000 Pet XP"
+    lore:
+      - "&7Instantly gives 10,000 experience points"
+      - "&7to your currently active summoned pet!"
+      - "&8&m-------------------------------------"
+      - "&7Price: &a4,000 zGems"
+      - "&7Your Balance: &f%excellenteconomy_balance_zgems%"
+      - "&8&m-------------------------------------"
+      - "&eClick to buy XP!"
+    price: 4000
+    currency: "zGems"
+    action: "addxp active 10000"
+
+  'dismiss_active':
+    material: BARRIER
+    slot: 16
+    name: "&c&lDismiss Active Pet"
+    lore:
+      - "&7Despawns and sends away your active"
+      - "&7pet, disabling its active booster."
+      - "&8&m-------------------------------------"
+      - "&cClick to dismiss pet"
+    price: 0
+    currency: "free"
+    action: "dismiss"
+
+  'nav_back':
+    material: PAPER
+    slot: 40
+    name: "&c&l« Go Back"
+    lore:
+      - "&7Return to the main pet menu."
+    price: 0
+    currency: "free"
+    action: "open main"
+
+  # ==================== STORAGE LIMIT UPGRADES ====================
+
+  'upgrade_limit_2':
+    material: LEAD
+    slot: 28
+    name: "&6&lStorage Expansion I &7[2 Pets]"
+    lore:
+      - "&7Expands your pet storage capacity."
+      - "&7Allows you to keep &b2 pets &7total."
+      - "&8&m-------------------------------------"
+      - "&7Upgrade Cost: &e200 zGems"
+      - "&7Your Balance: &f%excellenteconomy_balance_zgems%"
+      - "&8&m-------------------------------------"
+      - "&eClick to purchase upgrade!"
+    price: 200
+    currency: "zGems"
+    action: "upgrade_limit 2"
+
+  'upgrade_limit_3':
+    material: SADDLE
+    slot: 30
+    name: "&d&lStorage Expansion II &7[3 Pets]"
+    lore:
+      - "&7Expands your pet storage capacity."
+      - "&7Allows you to keep &b3 pets &7total."
+      - "&8&m-------------------------------------"
+      - "&7Upgrade Cost: &e400 zGems"
+      - "&7Your Balance: &f%excellenteconomy_balance_zgems%"
+      - "&8&m-------------------------------------"
+      - "&eClick to purchase upgrade!"
+    price: 400
+    currency: "zGems"
+    action: "upgrade_limit 3"
+
+  'upgrade_limit_4':
+    material: CHEST
+    slot: 32
+    name: "&b&lStorage Expansion III &7[4 Pets]"
+    lore:
+      - "&7Expands your pet storage capacity."
+      - "&7Allows you to keep &b4 pets &7total."
+      - "&8&m-------------------------------------"
+      - "&7Upgrade Cost: &e800 zGems"
+      - "&7Your Balance: &f%excellenteconomy_balance_zgems%"
+      - "&8&m-------------------------------------"
+      - "&eClick to purchase upgrade!"
+    price: 800
+    currency: "zGems"
+    action: "upgrade_limit 4"
+
+  'upgrade_limit_5':
+    material: NETHER_STAR
+    slot: 34
+    name: "&5&lStorage Expansion IV &7[5 Pets (MAX)]"
+    lore:
+      - "&7Ultimate pet storage capacity."
+      - "&7Allows you to keep &d5 pets &7total."
+      - "&8&m-------------------------------------"
+      - "&7Upgrade Cost: &e1,600 zGems"
+      - "&7Your Balance: &f%excellenteconomy_balance_zgems%"
+      - "&8&m-------------------------------------"
+      - "&eClick to purchase upgrade!"
+    price: 1600
+    currency: "zGems"
+    action: "upgrade_limit 5"

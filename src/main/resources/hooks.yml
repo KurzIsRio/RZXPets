@@ -1,0 +1,29 @@
+# =====================================================================
+#             RZXPets - WorldGuard Region Hooks Mappings
+# =====================================================================
+
+worldguard:
+  # Set to true to enable WorldGuard region-based pet controls.
+  enabled: true
+
+  # Default behavior when a player is NOT in any defined regions.
+  # true  = pets allowed by default, region lists act as blacklist (blocked-regions)
+  # false = pets blocked by default, region lists act as whitelist (allowed-regions)
+  default-allow-pets: true
+
+  # List of regions where pet spawning/summoning is strictly blocked.
+  blocked-regions:
+    - "spawn"
+    - "pvp_arena"
+    - "jail"
+
+  # List of regions where pet spawning/summoning is allowed.
+  # (Useful when default-allow-pets is set to false, or to override parent zones)
+  allowed-regions:
+    - "wild"
+    - "afk_arena"
+
+  # Messages sent to players when action is intercepted
+  messages:
+    summon-blocked: "&c&l[RZXPets] &cYou cannot summon pets in this region!"
+    dismissed-by-region: "&c&l[RZXPets] &cYour pet was dismissed because pets are not allowed in this area!"

@@ -1,0 +1,8 @@
+# Custom Mechanic Template - Flight
+enabled: true
+name: "&b&lAscension"
+description:
+  - "&7Grants creative flight permissions."
+  - "&7Requires pet level 100."
+type: "flight"
+min-level: 100

@@ -1,0 +1,57 @@
+# =====================================================================
+#             RZXPets - Main Pet Storage GUI
+# =====================================================================
+# Opened via /pets or /petshop.
+# =====================================================================
+
+enabled: true
+
+# Border Filler Configuration
+filler:
+  enabled: true
+  border-material: BLACK_STAINED_GLASS_PANE
+  empty-material: GRAY_STAINED_GLASS_PANE
+
+title: "&#08A3FF&l« &f&lPET STORAGE SYSTEM &#08A3FF&l»"
+size: 45
+
+items:
+  'pets_shop':
+    material: EMERALD
+    slot: 20
+    name: "&#00FF88&lADOPT NEW PETS"
+    lore:
+      - "&7Adopt companion pets with unique boosters"
+      - "&7using your raw &2zGems &7or rare items."
+      - "&8&m-------------------------------------"
+      - "&b▸ Click to open Adoption Shop"
+    price: 0
+    currency: "free"
+    action: "open shop"
+
+  'pet_storage':
+    material: CHEST
+    slot: 22
+    name: "&#08A3FF&lMY ACTIVE PET LOCKER"
+    lore:
+      - "&7Open your pet storage locker to summon,"
+      - "&7dismiss, or swap your active companions."
+      - "&8&m-------------------------------------"
+      - "&b▸ Click to open Storage Locker"
+    price: 0
+    currency: "free"
+    action: "open storage"
+
+  'pet_upgrades':
+    material: ANVIL
+    slot: 24
+    name: "&#FFAA00&lPET UPGRADES & LIMITS"
+    lore:
+      - "&7Level up your summoned pets with XP"
+      - "&7or upgrade your total storage capacity."
+      - "&8&m-------------------------------------"
+      - "&cRequires owning at least 1 pet."
+      - "&b▸ Click to open Upgrades"
+    price: 0
+    currency: "free"
+    action: "open upgrade"

@@ -1,0 +1,88 @@
+# Wealthy Blaze Pet Configuration
+enabled: true
+name: "&eWealthy Blaze"
+entity-type: BLAZE
+
+# Optional: set custom texture model id for inventory menus
+custom-model-data: 0
+
+mechanics:
+  - type: command-trigger
+    trigger: BLOCK_BREAK
+    name: "&6&lWealthy Mining"
+    description:
+      - "&7Break stone or ores to find zGems."
+      - "&7Current Chance: &f%chance%%"
+      - "&7zGems Found: &f%player_pet_level_additional% zGems"
+    chance: 0.05
+    level-modifier: 0.003
+    base-additional: 1
+    base-multiplier: 1.0
+    multiplier-level-modifier: 0.04
+    command: "zgems give %player% %player_pet_level_additional% -s"
+    message: "&e&l[Wealthy Blaze] &fFound %player_pet_level_additional% zGems while mining!"
+    min-level: 1
+    blocks:
+      - COAL_ORE
+      - DEEPSLATE_COAL_ORE
+      - IRON_ORE
+      - DEEPSLATE_IRON_ORE
+      - GOLD_ORE
+      - DEEPSLATE_GOLD_ORE
+      - REDSTONE_ORE
+      - DEEPSLATE_REDSTONE_ORE
+      - LAPIS_ORE
+      - DEEPSLATE_LAPIS_ORE
+      - DIAMOND_ORE
+      - DEEPSLATE_DIAMOND_ORE
+      - EMERALD_ORE
+      - DEEPSLATE_EMERALD_ORE
+      - STONE
+      - DEEPSLATE
+      - NETHER_QUARTZ_ORE
+      - NETHER_GOLD_ORE
+
+  - type: command-trigger
+    trigger: MOB_KILL
+    name: "&c&lWealthy Combat"
+    description:
+      - "&7Kill monsters to find extra zGems."
+      - "&7Current Chance: &f%chance%%"
+      - "&7zGems Found: &f%player_pet_level_additional% zGems"
+    chance: 0.05
+    level-modifier: 0.003
+    base-additional: 1
+    base-multiplier: 1.0
+    multiplier-level-modifier: 0.04
+    command: "zgems give %player% %player_pet_level_additional% -s"
+    message: "&e&l[Wealthy Blaze] &fFound %player_pet_level_additional% zGems from killing a mob!"
+    min-level: 35
+
+  - type: shield
+    name: "&6&lFlame Guard"
+    description:
+      - "&7Chance to block incoming damage with fire shield."
+      - "&7Current Chance: &f%chance%%"
+      - "&7Mitigation: &f%mitigation%%"
+    min-level: 70
+    base-chance: 0.05
+    level-modifier: 0.0015
+    base-mitigation: 0.10
+    mitigation-modifier: 0.002
+
+  - type: command-trigger
+    trigger: SUMMON
+    name: "Summon Greetings"
+    description:
+      - "&7Sends welcome message on companion spawn."
+    command: ""
+    message: "&e&l[Wealthy Blaze] &eBlaze equipped! Mining ores and killing mobs has a chance to yield extra zGems."
+    min-level: 1
+  - type: command-trigger
+    trigger: DISMISS
+    name: "Dismiss Status"
+    description:
+      - "&7Sends unequip message on companion despawn."
+    command: ""
+    message: "&7&l[Wealthy Blaze] &eBlaze unequipped."
+    min-level: 1
