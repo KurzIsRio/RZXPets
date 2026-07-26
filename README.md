@@ -62,3 +62,26 @@
 | `/pets dismiss` | Despawns currently active companion. | `rzxpets.dismiss` |
 | `/pets admin give <player> <id>` | Grants a companion to a player. | `rzxpets.admin` |
 | `/pets admin addxp <player> <amount>`| Adds XP to a player's active pet. | `rzxpets.admin` |
+
+---
+
+## 🔌 Developer API & Events
+
+RZXPets integrates a custom centralized event-propagation system (`RZXBus`) that forwards plugin lifecycle events to the central `RZXCore` hub.
+
+### Listening to RZX Events
+You can subscribe to events published on the `RZXBus` inside your own plugins:
+
+```java
+import com.rzxpets.rzx.RZXBus;
+import me.rzx.core.event.lifecycle.PluginLoadedEvent;
+
+// Subscribe to RZXPets custom event notifications
+RZXBus.subscribe(event -> {
+    if (event instanceof PluginLoadedEvent) {
+        // Handle custom companion system initialization
+        System.out.println("RZXPets loaded and ready under RZXCore specifications!");
+    }
+});
+```
+
