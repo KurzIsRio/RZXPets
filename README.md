@@ -47,7 +47,7 @@
 *   **RZXCore** (Required central framework dependency)
 *   **Spigot / Paper 1.20.4+**
 *   **PlaceholderAPI** (Required for balance rendering and hooks)
-*   **ExcellentEconomy** (Supported zGems currency ecosystem)
+*   **Any Economy/Currency Plugin** (Supports Vault economies, custom items, or local zGems currency)
 *   **LuckPerms** (Automatic pet storage limit adjustments)
 *   **WorldGuard** (Region-based pet summoning protection)
 
