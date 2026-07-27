@@ -1,10 +1,10 @@
 name: RZXPets
-version: 1.0.0
+version: 1.0.1
 main: com.rzxpets.RZXPets
 depend: [RZXCore]
 softdepend: [PlaceholderAPI, WorldGuard, ExcellentEconomy, LuckPerms, Oraxen, ItemsAdder]
 api-version: '1.20'
-author: Antigravity
+author: Kurz
 description: Custom companion pets plugin integrated with RZXCore specifications.
 
 commands:

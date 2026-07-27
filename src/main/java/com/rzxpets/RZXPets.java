@@ -29,7 +29,7 @@ import java.util.Map;
 import java.util.UUID;
 import org.bukkit.configuration.ConfigurationSection;
 
-@RZXPluginMeta(name = "RZXPets", version = "1.0.0", api = 1, authors = {"Antigravity"})
+@RZXPluginMeta(name = "RZXPets", version = "1.0.1", api = 1, authors = {"Kurz"})
 public class RZXPets extends JavaPlugin implements RZXPlugin, CommandExecutor {
     private static RZXPets instance;
 
@@ -222,7 +222,7 @@ public class RZXPets extends JavaPlugin implements RZXPlugin, CommandExecutor {
                             getName(),
                             getDescription().getVersion(),
                             1,
-                            new String[]{"Antigravity"},
+                            new String[]{"Kurz"},
                             0L,
                             List.of("RZXPetsService"),
                             List.of("rzxpets", "pets", "petshop", "petstorage"),
