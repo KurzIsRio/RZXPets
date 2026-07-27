@@ -20,7 +20,7 @@ mechanics:
     base-multiplier: 1.0
     multiplier-level-modifier: 0.04
     command: "zgems give %player% %player_pet_level_additional% -s"
-    message: "&e&l[Wealthy Blaze] &fFound %player_pet_level_additional% zGems while mining!"
+    message: "%name% &7» &fFound %player_pet_level_additional% zGems while mining!"
     min-level: 1
     blocks:
       - COAL_ORE
@@ -55,7 +55,7 @@ mechanics:
     base-multiplier: 1.0
     multiplier-level-modifier: 0.04
     command: "zgems give %player% %player_pet_level_additional% -s"
-    message: "&e&l[Wealthy Blaze] &fFound %player_pet_level_additional% zGems from killing a mob!"
+    message: "%name% &7» &fFound %player_pet_level_additional% zGems from killing a mob!"
     min-level: 35
 
   - type: shield
@@ -76,7 +76,7 @@ mechanics:
     description:
       - "&7Sends welcome message on companion spawn."
     command: ""
-    message: "&e&l[Wealthy Blaze] &eBlaze equipped! Mining ores and killing mobs has a chance to yield extra zGems."
+    message: "%pet_name% &7» &eBlaze equipped! Mining ores and killing mobs has a chance to yield extra zGems."
     min-level: 1
   - type: command-trigger
     trigger: DISMISS
@@ -84,5 +84,5 @@ mechanics:
     description:
       - "&7Sends unequip message on companion despawn."
     command: ""
-    message: "&7&l[Wealthy Blaze] &eBlaze unequipped."
+    message: "%pet_name% &7» &eBlaze unequipped."
     min-level: 1

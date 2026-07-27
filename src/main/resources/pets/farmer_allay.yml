@@ -15,13 +15,15 @@ mechanics:
       - "&7for your AxHoes tools."
       - "&7Trigger Chance: &a100% (Guaranteed)"
       - "&7Bonus Hoe XP: &b+%player_pet_level_additional% XP"
+      - "&7(Accumulates over 50 crop breaks)"
     chance: 1.0
     level-modifier: 0.0
     base-additional: 5
     base-multiplier: 1.0
     multiplier-level-modifier: 0.02
+    accumulate-count: 50
     command: "axhoes givexp %player% %player_pet_level_additional%"
-    message: "&d&l[Farmer Allay] &fAxHoes Hoe XP boosted by +%player_pet_level_additional%!"
+    message: "%name% &7» &fAxHoes Hoe XP boosted by +%player_pet_level_additional%! &7(Companion harvested %count% crops)"
     min-level: 1
     blocks:
       - WHEAT
@@ -53,7 +55,7 @@ mechanics:
     description:
       - "&7Sends welcome message on companion spawn."
     command: ""
-    message: "&b&l[Farmer Allay] &eAllay equipped! Harvest crops for extra Hoe XP."
+    message: "%pet_name% &7» &eAllay equipped! Harvest crops for extra Hoe XP."
     min-level: 1
   - type: command-trigger
     trigger: DISMISS
@@ -61,5 +63,5 @@ mechanics:
     description:
       - "&7Sends unequip message on companion despawn."
     command: ""
-    message: "&7&l[Farmer Allay] &eAllay unequipped."
+    message: "%pet_name% &7» &eAllay unequipped."
     min-level: 1

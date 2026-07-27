@@ -50,7 +50,7 @@ mechanics:
     description:
       - "&7Sends welcome message on companion spawn."
     command: ""
-    message: "&a&l[Swift Parrot] &eParrot equipped! Permanent Speed applied."
+    message: "%pet_name% &7» &eParrot equipped! Permanent Speed applied."
     min-level: 1
   - type: command-trigger
     trigger: DISMISS
@@ -58,5 +58,5 @@ mechanics:
     description:
       - "&7Sends unequip message on companion despawn."
     command: ""
-    message: "&7&l[Swift Parrot] &eParrot unequipped."
+    message: "%pet_name% &7» &eParrot unequipped."
     min-level: 1

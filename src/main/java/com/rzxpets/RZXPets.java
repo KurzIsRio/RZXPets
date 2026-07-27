@@ -31,6 +31,21 @@ import org.bukkit.configuration.ConfigurationSection;
 
 @RZXPluginMeta(name = "RZXPets", version = "1.0.0", api = 1, authors = {"Antigravity"})
 public class RZXPets extends JavaPlugin implements RZXPlugin, CommandExecutor {
+    private static RZXPets instance;
+
+    public static RZXPets getInstance() {
+        return instance;
+    }
+
+    public static void debug(int level, String msg) {
+        if (instance != null) {
+            int currentLevel = instance.getConfig().getInt("debug-level", 0);
+            if (currentLevel >= level) {
+                com.rzxpets.rzx.RZXLoggerService.info(msg);
+            }
+        }
+    }
+
     private DataManager dataManager;
     private PetManager petManager;
     private ShopGui shopGui;
@@ -47,6 +62,8 @@ public class RZXPets extends JavaPlugin implements RZXPlugin, CommandExecutor {
 
     @Override
     public void onEnable() {
+        instance = this;
+
         // Environment Validation Phase (Fail-Safe Startup)
         if (!validateEnvironment()) {
             RZXLoggerService.fatal("Environment validation failed! Disabling RZXPets cleanly.");
@@ -84,6 +101,7 @@ public class RZXPets extends JavaPlugin implements RZXPlugin, CommandExecutor {
     @Override
     public void onDisable() {
         shutdown();
+        instance = null;
     }
 
     private boolean validateEnvironment() {
@@ -461,6 +479,7 @@ public class RZXPets extends JavaPlugin implements RZXPlugin, CommandExecutor {
                 List<String> description = config.getStringList("description");
                 String id = file.getName().replace(".yml", "").replace(".yaml", "").toLowerCase();
                 PetType.register(new PetType(id, displayName, entityType, customModelData, mechanics, variant, description));
+                RZXLoggerService.info("Loaded pet companion configuration: '" + id + "' with " + mechanics.size() + " mechanics.");
             }
         }
     }
@@ -470,6 +489,11 @@ public class RZXPets extends JavaPlugin implements RZXPlugin, CommandExecutor {
         int minLevel = rawMechanic.containsKey("min-level") ? ((Number) rawMechanic.get("min-level")).intValue() : 1;
         String mName = (String) rawMechanic.get("name");
         List<String> mDesc = (List<String>) rawMechanic.get("description");
+
+        String customMsg = (String) rawMechanic.get("message");
+        String customCmd = (String) rawMechanic.get("command");
+
+        PetMechanic mechanic = null;
 
         if ("potion".equalsIgnoreCase(type)) {
             String effectStr = (String) rawMechanic.get("effect");
@@ -489,12 +513,12 @@ public class RZXPets extends JavaPlugin implements RZXPlugin, CommandExecutor {
             }
 
             if (effect != null) {
-                mechanics.add(new PetMechanic.PotionMechanic(minLevel, mName, mDesc, effect, amp, progressiveAmps));
+                mechanic = new PetMechanic.PotionMechanic(minLevel, mName, mDesc, effect, amp, progressiveAmps);
             } else {
                 RZXLoggerService.warning("Invalid PotionEffectType '" + effectStr + "' in pet config: " + petFileName);
             }
         } else if ("flight".equalsIgnoreCase(type)) {
-            mechanics.add(new PetMechanic.FlightMechanic(minLevel, mName, mDesc));
+            mechanic = new PetMechanic.FlightMechanic(minLevel, mName, mDesc);
         } else if ("command-trigger".equalsIgnoreCase(type)) {
             String trigger = (String) rawMechanic.get("trigger");
             double chance = rawMechanic.containsKey("chance") ? ((Number) rawMechanic.get("chance")).doubleValue() : 1.0;
@@ -539,7 +563,7 @@ public class RZXPets extends JavaPlugin implements RZXPlugin, CommandExecutor {
                 }
             }
 
-            mechanics.add(new PetMechanic.CommandTriggerMechanic(minLevel, mName, mDesc, trigger, chance, levelModifier, cmd, msg, targets, progressiveRewards, basePercent, percentLevelModifier, baseAdditional, additionalLevelModifier, baseMultiplier, multiplierLevelModifier));
+            mechanic = new PetMechanic.CommandTriggerMechanic(minLevel, mName, mDesc, trigger, chance, levelModifier, cmd, msg, targets, progressiveRewards, basePercent, percentLevelModifier, baseAdditional, additionalLevelModifier, baseMultiplier, multiplierLevelModifier);
         } else if ("custom".equalsIgnoreCase(type)) {
             String mechanicId = (String) rawMechanic.get("mechanic-id");
             if (mechanicId != null) {
@@ -565,39 +589,40 @@ public class RZXPets extends JavaPlugin implements RZXPlugin, CommandExecutor {
                     RZXLoggerService.warning("Custom mechanic '" + mechanicId + "' not found for pet config: " + petFileName);
                 }
             }
+            return;
         } else if ("mining-gems".equalsIgnoreCase(type)) {
             double chance = rawMechanic.containsKey("base-chance") ? ((Number) rawMechanic.get("base-chance")).doubleValue() : 0.05;
             double modifier = rawMechanic.containsKey("level-modifier") ? ((Number) rawMechanic.get("level-modifier")).doubleValue() : 0.003;
             int amount = rawMechanic.containsKey("base-amount") ? ((Number) rawMechanic.get("base-amount")).intValue() : 1;
             List<String> blocks = (List<String>) rawMechanic.get("blocks");
-            mechanics.add(new PetMechanic.MiningGemsMechanic(minLevel, mName, mDesc, chance, modifier, amount, blocks));
+            mechanic = new PetMechanic.MiningGemsMechanic(minLevel, mName, mDesc, chance, modifier, amount, blocks);
         } else if ("combat-gems".equalsIgnoreCase(type)) {
             double chance = rawMechanic.containsKey("base-chance") ? ((Number) rawMechanic.get("base-chance")).doubleValue() : 0.05;
             double modifier = rawMechanic.containsKey("level-modifier") ? ((Number) rawMechanic.get("level-modifier")).doubleValue() : 0.003;
             int amount = rawMechanic.containsKey("base-amount") ? ((Number) rawMechanic.get("base-amount")).intValue() : 1;
             List<String> mobs = (List<String>) rawMechanic.get("mobs");
-            mechanics.add(new PetMechanic.CombatGemsMechanic(minLevel, mName, mDesc, chance, modifier, amount, mobs));
+            mechanic = new PetMechanic.CombatGemsMechanic(minLevel, mName, mDesc, chance, modifier, amount, mobs);
         } else if ("xp-booster".equalsIgnoreCase(type)) {
             double multiplier = rawMechanic.containsKey("base-multiplier") ? ((Number) rawMechanic.get("base-multiplier")).doubleValue() : 1.0;
             double modifier = rawMechanic.containsKey("level-modifier") ? ((Number) rawMechanic.get("level-modifier")).doubleValue() : 0.01;
-            mechanics.add(new PetMechanic.XpBoosterMechanic(minLevel, mName, mDesc, multiplier, modifier));
+            mechanic = new PetMechanic.XpBoosterMechanic(minLevel, mName, mDesc, multiplier, modifier);
         } else if ("shield".equalsIgnoreCase(type)) {
             double chance = rawMechanic.containsKey("base-chance") ? ((Number) rawMechanic.get("base-chance")).doubleValue() : 0.05;
             double modifier = rawMechanic.containsKey("level-modifier") ? ((Number) rawMechanic.get("level-modifier")).doubleValue() : 0.002;
             double baseMitigation = rawMechanic.containsKey("base-mitigation") ? ((Number) rawMechanic.get("base-mitigation")).doubleValue() : 0.10;
             double mitigationModifier = rawMechanic.containsKey("mitigation-modifier") ? ((Number) rawMechanic.get("mitigation-modifier")).doubleValue() : 0.004;
-            mechanics.add(new PetMechanic.ShieldMechanic(minLevel, mName, mDesc, chance, modifier, baseMitigation, mitigationModifier));
+            mechanic = new PetMechanic.ShieldMechanic(minLevel, mName, mDesc, chance, modifier, baseMitigation, mitigationModifier);
         } else if ("lifesteal".equalsIgnoreCase(type)) {
             double chance = rawMechanic.containsKey("base-chance") ? ((Number) rawMechanic.get("base-chance")).doubleValue() : 0.05;
             double modifier = rawMechanic.containsKey("level-modifier") ? ((Number) rawMechanic.get("level-modifier")).doubleValue() : 0.002;
             double basePercent = rawMechanic.containsKey("base-percent") ? ((Number) rawMechanic.get("base-percent")).doubleValue() : 0.05;
             double percentModifier = rawMechanic.containsKey("percent-modifier") ? ((Number) rawMechanic.get("percent-modifier")).doubleValue() : 0.0015;
-            mechanics.add(new PetMechanic.LifestealMechanic(minLevel, mName, mDesc, chance, modifier, basePercent, percentModifier));
+            mechanic = new PetMechanic.LifestealMechanic(minLevel, mName, mDesc, chance, modifier, basePercent, percentModifier);
         } else if ("double-drops".equalsIgnoreCase(type)) {
             double chance = rawMechanic.containsKey("base-chance") ? ((Number) rawMechanic.get("base-chance")).doubleValue() : 0.05;
             double modifier = rawMechanic.containsKey("level-modifier") ? ((Number) rawMechanic.get("level-modifier")).doubleValue() : 0.0035;
             List<String> blocks = (List<String>) rawMechanic.get("blocks");
-            mechanics.add(new PetMechanic.DoubleDropsMechanic(minLevel, mName, mDesc, chance, modifier, blocks));
+            mechanic = new PetMechanic.DoubleDropsMechanic(minLevel, mName, mDesc, chance, modifier, blocks);
         } else if ("combat-attack".equalsIgnoreCase(type)) {
             double baseDamage = rawMechanic.containsKey("base-damage") ? ((Number) rawMechanic.get("base-damage")).doubleValue() : 2.0;
             double damageModifier = rawMechanic.containsKey("damage-modifier") ? ((Number) rawMechanic.get("damage-modifier")).doubleValue() : 0.08;
@@ -605,14 +630,31 @@ public class RZXPets extends JavaPlugin implements RZXPlugin, CommandExecutor {
             double cooldownModifier = rawMechanic.containsKey("cooldown-modifier") ? ((Number) rawMechanic.get("cooldown-modifier")).doubleValue() : 0.1;
             String particle = (String) rawMechanic.get("particle");
             String sound = (String) rawMechanic.get("sound");
-            mechanics.add(new PetMechanic.CombatAttackMechanic(minLevel, mName, mDesc, baseDamage, damageModifier, baseCooldown, cooldownModifier, particle, sound));
+            mechanic = new PetMechanic.CombatAttackMechanic(minLevel, mName, mDesc, baseDamage, damageModifier, baseCooldown, cooldownModifier, particle, sound);
         } else if ("area-heal".equalsIgnoreCase(type)) {
             double baseHeal = rawMechanic.containsKey("base-heal") ? ((Number) rawMechanic.get("base-heal")).doubleValue() : 1.0;
             double healModifier = rawMechanic.containsKey("heal-modifier") ? ((Number) rawMechanic.get("heal-modifier")).doubleValue() : 0.04;
             double radius = rawMechanic.containsKey("radius") ? ((Number) rawMechanic.get("radius")).doubleValue() : 3.0;
             double baseCooldown = rawMechanic.containsKey("base-cooldown") ? ((Number) rawMechanic.get("base-cooldown")).doubleValue() : 30.0;
             double cooldownModifier = rawMechanic.containsKey("cooldown-modifier") ? ((Number) rawMechanic.get("cooldown-modifier")).doubleValue() : 0.15;
-            mechanics.add(new PetMechanic.AreaHealMechanic(minLevel, mName, mDesc, baseHeal, healModifier, radius, baseCooldown, cooldownModifier));
+            mechanic = new PetMechanic.AreaHealMechanic(minLevel, mName, mDesc, baseHeal, healModifier, radius, baseCooldown, cooldownModifier);
+        }
+
+        if (mechanic != null) {
+            mechanic.setCustomMessage(customMsg);
+            mechanic.setCustomCommand(customCmd);
+            if (mechanic instanceof PetMechanic.CommandTriggerMechanic) {
+                PetMechanic.CommandTriggerMechanic ctm = (PetMechanic.CommandTriggerMechanic) mechanic;
+                if (rawMechanic.containsKey("accumulate-count")) {
+                    int acc = ((Number) rawMechanic.get("accumulate-count")).intValue();
+                    ctm.setAccumulateCount(acc);
+                } else {
+                    if ("BLOCK_BREAK".equalsIgnoreCase(ctm.getTrigger()) && petFileName != null && petFileName.toLowerCase().contains("allay")) {
+                        ctm.setAccumulateCount(50);
+                    }
+                }
+            }
+            mechanics.add(mechanic);
         }
     }
 

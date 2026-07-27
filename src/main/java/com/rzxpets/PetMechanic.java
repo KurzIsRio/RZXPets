@@ -16,11 +16,84 @@ public abstract class PetMechanic {
     private final int minLevel;
     private final String name;
     private final List<String> description;
+    private String customMessage;
+    private String customCommand;
 
     public PetMechanic(int minLevel, String name, List<String> description) {
         this.minLevel = minLevel;
         this.name = name;
         this.description = description != null ? description : new java.util.ArrayList<>();
+    }
+
+    public String getCustomMessage() {
+        return customMessage;
+    }
+
+    public void setCustomMessage(String customMessage) {
+        this.customMessage = customMessage;
+    }
+
+    public String getCustomCommand() {
+        return customCommand;
+    }
+
+    public void setCustomCommand(String customCommand) {
+        this.customCommand = customCommand;
+    }
+
+    protected boolean handleCustomAction(Player player, java.util.Map<String, String> placeholders) {
+        boolean customRun = false;
+        if (customCommand != null && !customCommand.isEmpty()) {
+            String cmd = customCommand;
+            for (java.util.Map.Entry<String, String> entry : placeholders.entrySet()) {
+                cmd = cmd.replace(entry.getKey(), entry.getValue());
+            }
+            cmd = cmd.replace("%player%", player.getName());
+            Bukkit.dispatchCommand(Bukkit.getConsoleSender(), cmd);
+            customRun = true;
+        }
+        if (customMessage != null && !customMessage.isEmpty()) {
+            String msg = customMessage;
+            for (java.util.Map.Entry<String, String> entry : placeholders.entrySet()) {
+                msg = msg.replace(entry.getKey(), entry.getValue());
+            }
+            msg = msg.replace("%player%", player.getName());
+            player.sendMessage(PlaceholderHook.setPlaceholders(player, msg));
+            customRun = true;
+        }
+        return customRun;
+    }
+
+    public static boolean matchBlock(Material material, String target) {
+        if (material == null || target == null) return false;
+        String name = material.name();
+        if (name.equalsIgnoreCase(target)) return true;
+        
+        // Deepslate matching
+        if (name.equalsIgnoreCase("DEEPSLATE_" + target)) return true;
+        if (target.toUpperCase().startsWith("DEEPSLATE_") && name.equalsIgnoreCase(target.substring(10))) return true;
+        
+        // General match logic (e.g. support ore suffix)
+        if (target.equalsIgnoreCase("ORES") && name.endsWith("_ORE")) return true;
+        
+        return false;
+    }
+
+    public static boolean matchMob(EntityType entityType, String target) {
+        if (entityType == null || target == null) return false;
+        String name = entityType.name();
+        if (name.equalsIgnoreCase(target)) return true;
+        
+        // Zombie sub-types
+        if (target.equalsIgnoreCase("ZOMBIE")) {
+            if (name.equalsIgnoreCase("HUSK") || name.equalsIgnoreCase("DROWNED") || name.equalsIgnoreCase("ZOMBIE_VILLAGER")) return true;
+        }
+        // Skeleton sub-types
+        if (target.equalsIgnoreCase("SKELETON")) {
+            if (name.equalsIgnoreCase("STRAY") || name.equalsIgnoreCase("WITHER_SKELETON")) return true;
+        }
+        
+        return false;
     }
 
     public int getMinLevel() {
@@ -166,6 +239,10 @@ public abstract class PetMechanic {
         private final double additionalLevelModifier;
         private final double baseMultiplier;
         private final double multiplierLevelModifier;
+        
+        private int accumulateCount = 1;
+        private final java.util.Map<UUID, Integer> playerCounts = new java.util.HashMap<>();
+        private final java.util.Map<UUID, Double> playerAccumulators = new java.util.HashMap<>();
 
         public CommandTriggerMechanic(int minLevel, String name, List<String> description, String trigger, double chance, double levelModifier, String command, String message, List<String> targetList, java.util.Map<Integer, ProgressiveTriggerReward> progressiveRewards, double basePercent, double percentLevelModifier, double baseAdditional, double additionalLevelModifier, double baseMultiplier, double multiplierLevelModifier) {
             super(minLevel, name != null ? name : getDefaultName(trigger), description);
@@ -182,6 +259,14 @@ public abstract class PetMechanic {
             this.additionalLevelModifier = additionalLevelModifier;
             this.baseMultiplier = baseMultiplier;
             this.multiplierLevelModifier = multiplierLevelModifier;
+        }
+
+        public int getAccumulateCount() {
+            return accumulateCount;
+        }
+
+        public void setAccumulateCount(int count) {
+            this.accumulateCount = count;
         }
 
         public double getChance() { return chance; }
@@ -213,17 +298,22 @@ public abstract class PetMechanic {
         public void onTrigger(Player player, PetData data, String triggerType, Object context) {
             if (!this.trigger.equalsIgnoreCase(triggerType)) return;
 
+            RZXPets.debug(2, "[Debug-Mechanics] CommandTriggerMechanic.onTrigger called for " + player.getName() + " with trigger " + triggerType);
+
             if ("BLOCK_BREAK".equalsIgnoreCase(triggerType) && context instanceof Material) {
                 Material material = (Material) context;
                 if (targetList != null && !targetList.isEmpty()) {
                     boolean matched = false;
                     for (String t : targetList) {
-                        if (material.name().equalsIgnoreCase(t)) {
+                        if (matchBlock(material, t)) {
                             matched = true;
                             break;
                         }
                     }
+                    RZXPets.debug(2, "[Debug-Mechanics] Block match evaluation for " + material.name() + ": " + matched + " (TargetList: " + targetList + ")");
                     if (!matched) return;
+                } else {
+                    RZXPets.debug(2, "[Debug-Mechanics] Block match evaluation: targetList is empty/null, triggering automatically.");
                 }
             }
 
@@ -232,12 +322,15 @@ public abstract class PetMechanic {
                 if (targetList != null && !targetList.isEmpty()) {
                     boolean matched = false;
                     for (String t : targetList) {
-                        if (entityType.name().equalsIgnoreCase(t)) {
+                        if (matchMob(entityType, t)) {
                             matched = true;
                             break;
                         }
                     }
+                    RZXPets.debug(2, "[Debug-Mechanics] Mob match evaluation for " + entityType.name() + ": " + matched + " (TargetList: " + targetList + ")");
                     if (!matched) return;
+                } else {
+                    RZXPets.debug(2, "[Debug-Mechanics] Mob match evaluation: targetList is empty/null, triggering automatically.");
                 }
             }
 
@@ -254,7 +347,10 @@ public abstract class PetMechanic {
             }
 
             double activeChance = Math.min(1.0, baseCh + (data.getLevel() * levelModifier));
-            if (Math.random() >= activeChance) {
+            double roll = Math.random();
+            RZXPets.debug(2, "[Debug-Mechanics] Active chance for " + player.getName() + ": " + activeChance + " | Roll: " + roll);
+            if (roll >= activeChance) {
+                RZXPets.debug(2, "[Debug-Mechanics] Chance roll failed.");
                 return;
             }
 
@@ -266,33 +362,139 @@ public abstract class PetMechanic {
             }
             double finalAdd = baseAdd * multVal;
 
-            String addStr = (finalAdd == (int) finalAdd) ? String.valueOf((int) finalAdd) : String.format("%.2f", finalAdd);
+            UUID uuid = player.getUniqueId();
+            if (accumulateCount > 1) {
+                int currentCount = playerCounts.getOrDefault(uuid, 0) + 1;
+                double currentAcc = playerAccumulators.getOrDefault(uuid, 0.0) + finalAdd;
+                
+                if (currentCount < accumulateCount) {
+                    playerCounts.put(uuid, currentCount);
+                    playerAccumulators.put(uuid, currentAcc);
+                    return; // Accumulating...
+                }
+                
+                playerCounts.remove(uuid);
+                playerAccumulators.remove(uuid);
+                finalAdd = currentAcc;
+            }
+
+            String addStr = String.valueOf((int) Math.round(finalAdd));
             String pctStr = (pctVal == (int) pctVal) ? String.valueOf((int) pctVal) : String.format("%.2f", pctVal);
             String multStr = (multVal == (int) multVal) ? String.valueOf((int) multVal) : String.format("%.2f", multVal);
+            String chanceStr = String.format("%.1f", activeChance * 100);
+            String petName = data.getType() != null ? data.getType().getDisplayName() : "";
+            String countStr = String.valueOf(accumulateCount > 1 ? accumulateCount : 1);
 
             if (activeCmd != null && !activeCmd.isEmpty()) {
                 String parsedCommand = activeCmd
                     .replace("%player%", player.getName())
+                    .replace("%name%", getName())
+                    .replace("%pet_name%", petName)
+                    .replace("%chance%", chanceStr)
+                    .replace("%percent%", pctStr)
+                    .replace("%additional%", addStr)
+                    .replace("%multiplier%", multStr)
+                    .replace("%count%", countStr)
                     .replace("%player_pet_level_percent%", pctStr)
                     .replace("%player_pet_level_additional%", addStr)
                     .replace("%player_pet_level_multiplier%", multStr)
                     .replace("%player_pet_level_multiply%", multStr);
+                RZXPets.debug(2, "[Debug-Mechanics] Dispatching console command: " + parsedCommand);
                 Bukkit.dispatchCommand(Bukkit.getConsoleSender(), parsedCommand);
             }
 
             if (activeMsg != null && !activeMsg.isEmpty()) {
                 String parsedMsg = activeMsg
                     .replace("%player%", player.getName())
+                    .replace("%name%", getName())
+                    .replace("%pet_name%", petName)
+                    .replace("%chance%", chanceStr)
+                    .replace("%percent%", pctStr)
+                    .replace("%additional%", addStr)
+                    .replace("%multiplier%", multStr)
+                    .replace("%count%", countStr)
                     .replace("%player_pet_level_percent%", pctStr)
                     .replace("%player_pet_level_additional%", addStr)
                     .replace("%player_pet_level_multiplier%", multStr)
                     .replace("%player_pet_level_multiply%", multStr);
-                player.sendMessage(PlaceholderHook.color(parsedMsg));
+                RZXPets.debug(2, "[Debug-Mechanics] Sending player message: " + parsedMsg);
+                player.sendMessage(PlaceholderHook.setPlaceholders(player, parsedMsg));
+            }
+        }
+
+        public void flushAccumulator(Player player) {
+            UUID uuid = player.getUniqueId();
+            if (!playerCounts.containsKey(uuid)) return;
+            
+            int count = playerCounts.remove(uuid);
+            double accumulated = playerAccumulators.remove(uuid);
+            if (count <= 0 || accumulated <= 0.0) return;
+
+            RZXPets plugin = RZXPets.getInstance();
+            if (plugin == null) return;
+            PlayerData data = plugin.getPlayerData(uuid);
+            if (data == null) return;
+            String activeId = data.getActivePet();
+            if (activeId == null) return;
+            PetData petData = data.getPet(activeId);
+            if (petData == null) return;
+
+            double baseCh = chance;
+            String activeCmd = command;
+            String activeMsg = message;
+
+            for (java.util.Map.Entry<Integer, ProgressiveTriggerReward> entry : progressiveRewards.entrySet()) {
+                if (petData.getLevel() >= entry.getKey()) {
+                    baseCh = entry.getValue().getChance();
+                    activeCmd = entry.getValue().getCommand();
+                    activeMsg = entry.getValue().getMessage();
+                }
+            }
+
+            double activeChance = Math.min(1.0, baseCh + (petData.getLevel() * levelModifier));
+            double pctVal = basePercent + (petData.getLevel() * percentLevelModifier);
+            
+            String addStr = String.valueOf((int) Math.round(accumulated));
+            String pctStr = (pctVal == (int) pctVal) ? String.valueOf((int) pctVal) : String.format("%.2f", pctVal);
+            String chanceStr = String.format("%.1f", activeChance * 100);
+            String petName = petData.getType() != null ? petData.getType().getDisplayName() : "";
+            String countStr = String.valueOf(count);
+
+            if (activeCmd != null && !activeCmd.isEmpty()) {
+                String parsedCommand = activeCmd
+                    .replace("%player%", player.getName())
+                    .replace("%name%", getName())
+                    .replace("%pet_name%", petName)
+                    .replace("%chance%", chanceStr)
+                    .replace("%percent%", pctStr)
+                    .replace("%additional%", addStr)
+                    .replace("%count%", countStr)
+                    .replace("%player_pet_level_percent%", pctStr)
+                    .replace("%player_pet_level_additional%", addStr);
+                RZXPets.debug(2, "[Debug-Mechanics] Dispatching console command (Flush): " + parsedCommand);
+                Bukkit.dispatchCommand(Bukkit.getConsoleSender(), parsedCommand);
+            }
+
+            if (activeMsg != null && !activeMsg.isEmpty()) {
+                String parsedMsg = activeMsg
+                    .replace("%player%", player.getName())
+                    .replace("%name%", getName())
+                    .replace("%pet_name%", petName)
+                    .replace("%chance%", chanceStr)
+                    .replace("%percent%", pctStr)
+                    .replace("%additional%", addStr)
+                    .replace("%count%", countStr)
+                    .replace("%player_pet_level_percent%", pctStr)
+                    .replace("%player_pet_level_additional%", addStr);
+                RZXPets.debug(2, "[Debug-Mechanics] Sending player message (Flush): " + parsedMsg);
+                player.sendMessage(PlaceholderHook.setPlaceholders(player, parsedMsg));
             }
         }
 
         @Override
-        public void onDismiss(Player player) {}
+        public void onDismiss(Player player) {
+            flushAccumulator(player);
+        }
     }
 
     // ==========================================
@@ -327,7 +529,7 @@ public abstract class PetMechanic {
             if (blocks != null && !blocks.isEmpty()) {
                 boolean matched = false;
                 for (String b : blocks) {
-                    if (material.name().equalsIgnoreCase(b)) {
+                    if (matchBlock(material, b)) {
                         matched = true;
                         break;
                     }
@@ -338,8 +540,14 @@ public abstract class PetMechanic {
             double chance = Math.min(0.35, baseChance + (data.getLevel() * levelModifier));
             if (Math.random() < chance) {
                 int amount = baseAmount + (data.getLevel() / 30);
+                java.util.Map<String, String> placeholders = new java.util.HashMap<>();
+                placeholders.put("%chance%", String.format("%.1f", chance * 100));
+                placeholders.put("%amount%", String.valueOf(amount));
+                
+                if (handleCustomAction(player, placeholders)) return;
+                
                 Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "zgems give " + player.getName() + " " + amount + " -s");
-                player.sendMessage(PlaceholderHook.color("&e&l[Mining Gems] &fYour companion found &a" + amount + " zGems&f!"));
+                player.sendMessage(PlaceholderHook.color(getName() + " &7» &fYour companion found &a" + amount + " zGems&f!"));
             }
         }
 
@@ -379,7 +587,7 @@ public abstract class PetMechanic {
             if (mobs != null && !mobs.isEmpty()) {
                 boolean matched = false;
                 for (String m : mobs) {
-                    if (entityType.name().equalsIgnoreCase(m)) {
+                    if (matchMob(entityType, m)) {
                         matched = true;
                         break;
                     }
@@ -390,8 +598,14 @@ public abstract class PetMechanic {
             double chance = Math.min(0.35, baseChance + (data.getLevel() * levelModifier));
             if (Math.random() < chance) {
                 int amount = baseAmount + (data.getLevel() / 30);
+                java.util.Map<String, String> placeholders = new java.util.HashMap<>();
+                placeholders.put("%chance%", String.format("%.1f", chance * 100));
+                placeholders.put("%amount%", String.valueOf(amount));
+                
+                if (handleCustomAction(player, placeholders)) return;
+                
                 Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "zgems give " + player.getName() + " " + amount + " -s");
-                player.sendMessage(PlaceholderHook.color("&e&l[Combat Gems] &fYour companion found &a" + amount + " zGems&f!"));
+                player.sendMessage(PlaceholderHook.color(getName() + " &7» &fYour companion found &a" + amount + " zGems&f!"));
             }
         }
 
@@ -428,11 +642,16 @@ public abstract class PetMechanic {
             xpArr[0] = (int) Math.round(xpArr[0] * mult);
 
             if (xpArr[0] > originalXp) {
+                java.util.Map<String, String> placeholders = new java.util.HashMap<>();
+                placeholders.put("%multiplier%", String.format("%.0f", (mult - 1.0) * 100));
+                
+                if (handleCustomAction(player, placeholders)) return;
+
                 long now = System.currentTimeMillis();
                 long lastMsg = lastMessageTime.getOrDefault(player.getUniqueId(), 0L);
                 if (now - lastMsg >= 5000L) { // 5 second rate limit
                     lastMessageTime.put(player.getUniqueId(), now);
-                    player.sendMessage(PlaceholderHook.color("&d&l[XP Booster] &fYour companion boosted your XP gain by &a" + String.format("%.0f", (mult - 1.0) * 100) + "%&f!"));
+                    player.sendMessage(PlaceholderHook.color(getName() + " &7» &fYour companion boosted your XP gain by &a" + String.format("%.0f", (mult - 1.0) * 100) + "%&f!"));
                 }
             }
         }
@@ -477,8 +696,15 @@ public abstract class PetMechanic {
             if (Math.random() < chance) {
                 double pct = Math.min(0.50, baseMitigation + (data.getLevel() * mitigationModifier));
                 damageArr[0] = damageArr[0] * (1.0 - pct);
+                
+                java.util.Map<String, String> placeholders = new java.util.HashMap<>();
+                placeholders.put("%chance%", String.format("%.1f", chance * 100));
+                placeholders.put("%mitigation%", String.format("%.0f", pct * 100));
+                
+                if (handleCustomAction(player, placeholders)) return;
+
                 player.getWorld().spawnParticle(org.bukkit.Particle.valueOf("BARRIER"), player.getLocation().add(0, 1, 0), 3, 0.2, 0.2, 0.2, 0.0);
-                player.sendMessage(PlaceholderHook.color("&9&l[Shield] &fYour companion blocked &a" + (int)(pct * 100) + "% &fof incoming damage!"));
+                player.sendMessage(PlaceholderHook.color(getName() + " &7» &fYour companion blocked &a" + (int)(pct * 100) + "% &fof incoming damage!"));
             }
         }
 
@@ -525,11 +751,17 @@ public abstract class PetMechanic {
                 player.setHealth(newHealth);
                 player.getWorld().spawnParticle(org.bukkit.Particle.valueOf("HEART"), player.getLocation().add(0, 1.5, 0), 3, 0.2, 0.2, 0.2, 0.0);
 
+                java.util.Map<String, String> placeholders = new java.util.HashMap<>();
+                placeholders.put("%chance%", String.format("%.1f", chance * 100));
+                placeholders.put("%percent%", String.format("%.0f", pct * 100));
+
+                if (handleCustomAction(player, placeholders)) return;
+
                 long now = System.currentTimeMillis();
                 long lastMsg = lastMessageTime.getOrDefault(player.getUniqueId(), 0L);
                 if (now - lastMsg >= 3000L) { // 3 second rate limit
                     lastMessageTime.put(player.getUniqueId(), now);
-                    player.sendMessage(PlaceholderHook.color("&c&l[Lifesteal] &fYour companion healed you for &a" + String.format("%.1f", healAmount) + " HP&f!"));
+                    player.sendMessage(PlaceholderHook.color(getName() + " &7» &fYour companion healed you for &a" + String.format("%.1f", healAmount) + " HP&f!"));
                 }
             }
         }
@@ -571,7 +803,7 @@ public abstract class PetMechanic {
             if (blocks != null && !blocks.isEmpty()) {
                 boolean matched = false;
                 for (String b : blocks) {
-                    if (material.name().equalsIgnoreCase(b)) {
+                    if (matchBlock(material, b)) {
                         matched = true;
                         break;
                     }
@@ -587,11 +819,16 @@ public abstract class PetMechanic {
                 }
                 player.getWorld().spawnParticle(org.bukkit.Particle.valueOf("VILLAGER_HAPPY"), event.getBlock().getLocation().add(0.5, 0.5, 0.5), 5, 0.2, 0.2, 0.2, 0.0);
 
+                java.util.Map<String, String> placeholders = new java.util.HashMap<>();
+                placeholders.put("%chance%", String.format("%.1f", chance * 100));
+
+                if (handleCustomAction(player, placeholders)) return;
+
                 long now = System.currentTimeMillis();
                 long lastMsg = lastMessageTime.getOrDefault(player.getUniqueId(), 0L);
                 if (now - lastMsg >= 2000L) { // 2 second rate limit
                     lastMessageTime.put(player.getUniqueId(), now);
-                    player.sendMessage(PlaceholderHook.color("&a&l[Double Harvest] &fYour companion doubled the block drops!"));
+                    player.sendMessage(PlaceholderHook.color(getName() + " &7» &fYour companion doubled the block drops!"));
                 }
             }
         }
@@ -691,11 +928,31 @@ public abstract class PetMechanic {
                 
                 double amount = baseHeal + (data.getLevel() * healModifier);
                 double rad = radius + (data.getLevel() * 0.03);
+                double cooldownSec = Math.max(15.0, baseCooldown - (data.getLevel() * cooldownModifier));
+
+                java.util.Map<String, String> placeholders = new java.util.HashMap<>();
+                placeholders.put("%heal%", String.format("%.1f", amount));
+                placeholders.put("%radius%", String.format("%.1f", rad));
+                placeholders.put("%cooldown%", String.format("%.1f", cooldownSec));
+
+                if (handleCustomAction(player, placeholders)) {
+                    // Heal player and allies silently
+                    healEntity(player, amount);
+                    player.getWorld().spawnParticle(org.bukkit.Particle.valueOf("HEART"), player.getLocation().add(0, 1.0, 0), 4, 0.3, 0.3, 0.3, 0.05);
+                    for (Entity entity : player.getNearbyEntities(rad, rad, rad)) {
+                        if (entity instanceof Player) {
+                            Player p = (Player) entity;
+                            healEntity(p, amount);
+                            p.getWorld().spawnParticle(org.bukkit.Particle.valueOf("HEART"), p.getLocation().add(0, 1.0, 0), 4, 0.3, 0.3, 0.3, 0.05);
+                        }
+                    }
+                    return;
+                }
                 
                 // Heal player
                 healEntity(player, amount);
                 player.getWorld().spawnParticle(org.bukkit.Particle.valueOf("HEART"), player.getLocation().add(0, 1.0, 0), 4, 0.3, 0.3, 0.3, 0.05);
-                player.sendMessage(PlaceholderHook.color("&a&l[Rejuvenation] &fYour companion healed you for &a" + String.format("%.1f", amount) + " HP!"));
+                player.sendMessage(PlaceholderHook.color(getName() + " &7» &fYour companion healed you for &a" + String.format("%.1f", amount) + " HP!"));
                 
                 // Heal nearby allies/players
                 for (Entity entity : player.getNearbyEntities(rad, rad, rad)) {
@@ -703,7 +960,7 @@ public abstract class PetMechanic {
                         Player p = (Player) entity;
                         healEntity(p, amount);
                         p.getWorld().spawnParticle(org.bukkit.Particle.valueOf("HEART"), p.getLocation().add(0, 1.0, 0), 4, 0.3, 0.3, 0.3, 0.05);
-                        p.sendMessage(PlaceholderHook.color("&a&l[Rejuvenation] &fYou were healed for &a" + String.format("%.1f", amount) + " HP &fby " + player.getName() + "'s companion!"));
+                        p.sendMessage(PlaceholderHook.color(getName() + " &7» &fYou were healed for &a" + String.format("%.1f", amount) + " HP &fby " + player.getName() + "'s companion!"));
                     }
                 }
             }

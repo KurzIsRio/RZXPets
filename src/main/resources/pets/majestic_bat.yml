@@ -27,7 +27,7 @@ mechanics:
     description:
       - "&7Plays bat take-off sound on spawn."
     command: "playsound minecraft:entity.bat.takeoff ambient %player%"
-    message: "&d&l[Majestic Bat] &eBat equipped! Vampiric Echolocation active."
+    message: "%pet_name% &7» &eBat equipped! Vampiric Echolocation active."
     min-level: 1
   - type: command-trigger
     trigger: DISMISS
@@ -35,5 +35,5 @@ mechanics:
     description:
       - "&7Plays bat ambient sound on unequip."
     command: "playsound minecraft:entity.bat.ambient ambient %player%"
-    message: "&7&l[Majestic Bat] &eBat unequipped."
+    message: "%pet_name% &7» &eBat unequipped."
     min-level: 1

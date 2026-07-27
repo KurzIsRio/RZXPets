@@ -55,3 +55,8 @@ renaming:
 follow:
   # Distance in blocks between player and pet before the pet instantly teleports to the player
   teleport-distance: 15.0
+
+# Debug Settings
+# If enabled, detailed debug logs will be sent to the console.
+# Set debug level (0 = disabled, 1 = basic warning/error logs, 2 = full gameplay triggers debug logs).
+debug-level: 0

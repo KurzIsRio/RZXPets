@@ -1,2 +1,26 @@
+# Maven
+target/
+pom.xml.tag
+pom.xml.releaseBackup
+pom.xml.versionsBackup
+pom.xml.next
+release.properties
+dependency-reduced-pom.xml
+buildNumber.properties
+.gpg/
+
+# IDEs
+.idea/
+*.iml
+.vscode/
+.settings/
+.classpath
+.project
+
+# Temporary / Local build helpers
+classpath.txt
+sources.txt
+
+# Releases & descriptions (custom ignored for this repo)
 RELEASE_NOTES.md
 MODRINTH_DESCRIPTION.md

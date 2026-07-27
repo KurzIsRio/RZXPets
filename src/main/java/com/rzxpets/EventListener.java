@@ -45,6 +45,7 @@ public class EventListener implements Listener {
         }
     }
 
+
     @EventHandler
     public void onPlayerJoin(PlayerJoinEvent event) {
         Player player = event.getPlayer();
@@ -100,35 +101,39 @@ public class EventListener implements Listener {
         }
     }
 
-    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
+    @EventHandler(priority = EventPriority.HIGHEST)
     public void onBlockBreak(BlockBreakEvent event) {
         Player player = event.getPlayer();
+        Block block = event.getBlock();
+        Material material = block.getType();
+
+        RZXPets.debug(2, "[Debug-Mechanics] BlockBreakEvent fired for player " + player.getName() + " on block " + material + " (Event Cancelled: " + event.isCancelled() + ")");
+
         PlayerData data = plugin.getPlayerData(player.getUniqueId());
         String activeId = data.getActivePet();
         if (activeId == null) {
+            RZXPets.debug(2, "[Debug-Mechanics] BlockBreak aborted: Player has no active companion pet equipped.");
             return;
         }
 
         PetData petData = data.getPet(activeId);
-        if (petData == null || petData.getType() == null) {
+        if (petData == null) {
+            RZXPets.debug(2, "[Debug-Mechanics] BlockBreak aborted: Active pet data for ID " + activeId + " is null.");
+            return;
+        }
+        if (petData.getType() == null) {
+            RZXPets.debug(2, "[Debug-Mechanics] BlockBreak aborted: PetType definition for active ID " + activeId + " is null.");
             return;
         }
 
-        Block block = event.getBlock();
-        Material material = block.getType();
-
-        // If the block is a crop (Ageable), check if it is fully grown to prevent abuse
-        if (block.getBlockData() instanceof org.bukkit.block.data.Ageable) {
-            org.bukkit.block.data.Ageable ageable = (org.bukkit.block.data.Ageable) block.getBlockData();
-            if (ageable.getAge() < ageable.getMaximumAge()) {
-                return;
-            }
-        }
-
+        RZXPets.debug(2, "[Debug-Mechanics] Processing " + petData.getType().getMechanics().size() + " mechanics on pet " + activeId);
         for (PetMechanic mechanic : petData.getType().getMechanics()) {
             if (petData.getLevel() >= mechanic.getMinLevel()) {
+                RZXPets.debug(2, "[Debug-Mechanics] Triggering trigger BLOCK_BREAK / DOUBLE_DROPS for mechanic " + mechanic.getName());
                 mechanic.onTrigger(player, petData, "BLOCK_BREAK", material);
                 mechanic.onTrigger(player, petData, "DOUBLE_DROPS", event);
+            } else {
+                RZXPets.debug(2, "[Debug-Mechanics] Mechanic " + mechanic.getName() + " not triggered: Pet Level " + petData.getLevel() + " is below min-level " + mechanic.getMinLevel());
             }
         }
     }

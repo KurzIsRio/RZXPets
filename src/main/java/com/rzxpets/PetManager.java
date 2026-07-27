@@ -14,10 +14,12 @@ import java.util.Map;
 import java.util.UUID;
 
 public class PetManager {
+    private static final UUID DUMMY_UUID = UUID.fromString("00000000-0000-0000-0000-000000000000");
     private final RZXPets plugin;
     private final Map<UUID, Entity> activeEntities;
     private final Map<UUID, AttackAnimation> activeAnimations;
     private final Map<UUID, Long> combatCooldowns;
+    private final Map<UUID, Long> lastSpawnAttempt;
     private boolean tasksStarted = false;
 
     public PetManager(RZXPets plugin) {
@@ -25,6 +27,7 @@ public class PetManager {
         this.activeEntities = new HashMap<>();
         this.activeAnimations = new HashMap<>();
         this.combatCooldowns = new HashMap<>();
+        this.lastSpawnAttempt = new HashMap<>();
     }
 
     public void startTasks() {
@@ -51,13 +54,26 @@ public class PetManager {
     }
 
     public void summonPet(Player player, String typeId) {
+        summonPet(player, typeId, false);
+    }
+
+    public void summonPet(Player player, String typeId, boolean silent) {
         if (!plugin.arePetsAllowedAt(player)) {
-            String blockedMsg = plugin.getHooksConfig().getString("worldguard.messages.summon-blocked", "&c&l[RZXPets] &cYou cannot summon pets in this region!");
-            player.sendMessage(PlaceholderHook.color(blockedMsg));
+            if (!silent) {
+                String blockedMsg = plugin.getHooksConfig().getString("worldguard.messages.summon-blocked", "&c&l[RZXPets] &cYou cannot summon pets in this region!");
+                player.sendMessage(PlaceholderHook.color(blockedMsg));
+            }
             return;
         }
 
-        despawnPet(player);
+        if (silent) {
+            Entity oldPet = activeEntities.remove(player.getUniqueId());
+            if (oldPet != null && oldPet.isValid()) {
+                oldPet.remove();
+            }
+        } else {
+            despawnPet(player);
+        }
 
         PetType type = PetType.getById(typeId);
         if (type == null) return;
@@ -103,7 +119,14 @@ public class PetManager {
                 le.setCanPickupItems(false);
                 le.setCollidable(false);
                 if (pet instanceof org.bukkit.entity.Mob) {
-                    ((org.bukkit.entity.Mob) pet).setAware(false);
+                    org.bukkit.entity.Mob mob = (org.bukkit.entity.Mob) pet;
+                    mob.setAware(false);
+                    try {
+                        java.lang.reflect.Method method = org.bukkit.entity.Mob.class.getMethod("setDespawnInPeacefulOverride", Class.forName("net.kyori.adventure.util.TriState"));
+                        Object triStateFalse = Class.forName("net.kyori.adventure.util.TriState").getField("FALSE").get(null);
+                        method.invoke(mob, triStateFalse);
+                    } catch (Throwable ignored) {
+                    }
                 }
             }
 
@@ -115,6 +138,11 @@ public class PetManager {
             // Apply static color variant for parrots so they don't randomly morph
             if (pet instanceof org.bukkit.entity.Parrot) {
                 org.bukkit.entity.Parrot parrot = (org.bukkit.entity.Parrot) pet;
+                try {
+                    parrot.setTamed(true);
+                    parrot.setOwner(Bukkit.getOfflinePlayer(DUMMY_UUID));
+                } catch (Throwable ignored) {
+                }
                 String varName = type.getVariant();
                 org.bukkit.entity.Parrot.Variant variant = org.bukkit.entity.Parrot.Variant.CYAN;
                 if (varName != null && !varName.isEmpty()) {
@@ -137,13 +165,15 @@ public class PetManager {
             }
         }
 
-        // Run SUMMON command triggers
-        PetData petData = playerData.getPet(typeId);
-        int petLvl = petData != null ? petData.getLevel() : 1;
-        if (petData != null) {
-            for (PetMechanic mechanic : type.getMechanics()) {
-                if (petLvl >= mechanic.getMinLevel()) {
-                    mechanic.onTrigger(player, petData, "SUMMON", null);
+        if (!silent) {
+            // Run SUMMON command triggers
+            PetData petData = playerData.getPet(typeId);
+            int petLvl = petData != null ? petData.getLevel() : 1;
+            if (petData != null) {
+                for (PetMechanic mechanic : type.getMechanics()) {
+                    if (petLvl >= mechanic.getMinLevel()) {
+                        mechanic.onTrigger(player, petData, "SUMMON", null);
+                    }
                 }
             }
         }
@@ -223,7 +253,12 @@ public class PetManager {
                         // Auto-respawn invalidated or unspawned entities
                         if (pet == null || !pet.isValid()) {
                             if (player.isOnline() && !player.isDead()) {
-                                summonPet(player, activeId);
+                                long now = System.currentTimeMillis();
+                                long lastAttempt = lastSpawnAttempt.getOrDefault(uuid, 0L);
+                                if (now - lastAttempt > 5000L) { // 5-second cooldown
+                                    lastSpawnAttempt.put(uuid, now);
+                                    summonPet(player, activeId, true);
+                                }
                                 pet = activeEntities.get(uuid);
                             }
                             if (pet == null || !pet.isValid()) continue;
@@ -305,7 +340,13 @@ public class PetManager {
                                             );
                                         } catch (Exception ignored) {}
                                         
-                                        player.sendMessage(PlaceholderHook.color("&6&l[Companion Attack] &fYour companion attacked &c" + anim.getTargetEntity().getName() + " &ffor &a" + String.format("%.1f", anim.getDamage()) + " damage!"));
+                                        java.util.Map<String, String> placeholders = new java.util.HashMap<>();
+                                        placeholders.put("%damage%", String.format("%.1f", anim.getDamage()));
+                                        placeholders.put("%target%", anim.getTargetEntity().getName());
+                                        
+                                        if (anim.getMechanic() == null || !anim.getMechanic().handleCustomAction(player, placeholders)) {
+                                            player.sendMessage(PlaceholderHook.setPlaceholders(player, anim.getMechanicName() + " &7» &fYour companion attacked &c" + anim.getTargetEntity().getName() + " &ffor &a" + String.format("%.1f", anim.getDamage()) + " damage!"));
+                                        }
                                     }
                                 } else if (ticks <= 20) {
                                     // Return back to player shoulder
@@ -374,7 +415,9 @@ public class PetManager {
             pet.getLocation().clone(),
             attackMech.getDamage(petData.getLevel()),
             attackMech.getParticle(),
-            attackMech.getSound()
+            attackMech.getSound(),
+            attackMech.getName(),
+            attackMech
         ));
     }
 
@@ -384,15 +427,19 @@ public class PetManager {
         private final double damage;
         private final String particle;
         private final String sound;
+        private final String mechanicName;
+        private final PetMechanic mechanic;
         private int tickCount = 0;
         private boolean damageDealt = false;
 
-        public AttackAnimation(LivingEntity targetEntity, Location startLocation, double damage, String particle, String sound) {
+        public AttackAnimation(LivingEntity targetEntity, Location startLocation, double damage, String particle, String sound, String mechanicName, PetMechanic mechanic) {
             this.targetEntity = targetEntity;
             this.startLocation = startLocation;
             this.damage = damage;
             this.particle = particle;
             this.sound = sound;
+            this.mechanicName = mechanicName;
+            this.mechanic = mechanic;
         }
 
         public LivingEntity getTargetEntity() {
@@ -413,6 +460,14 @@ public class PetManager {
 
         public String getSound() {
             return sound;
+        }
+
+        public String getMechanicName() {
+            return mechanicName;
+        }
+
+        public PetMechanic getMechanic() {
+            return mechanic;
         }
 
         public int getTickCount() {
