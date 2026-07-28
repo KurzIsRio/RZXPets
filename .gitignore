@@ -24,3 +24,8 @@ sources.txt
 # Releases & descriptions (custom ignored for this repo)
 RELEASE_NOTES.md
 MODRINTH_DESCRIPTION.md
+.agents/rules/proceedapprove.md
+
+# Ignore Paid Premium code and Licensing Bot from Public GitHub repository
+premium/
+bot/

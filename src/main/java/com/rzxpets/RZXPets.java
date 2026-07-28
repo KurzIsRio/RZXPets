@@ -430,6 +430,16 @@ public class RZXPets extends JavaPlugin implements RZXPlugin, CommandExecutor {
     public void loadPets() {
         PetType.clear();
 
+        boolean isPremium = getConfig().getBoolean("edition.premium", true);
+        int maxPets = isPremium ? Integer.MAX_VALUE : getConfig().getInt("edition.standard-max-pets", 5);
+        int maxMechanics = isPremium ? Integer.MAX_VALUE : getConfig().getInt("edition.standard-max-mechanics", 10);
+
+        if (isPremium) {
+            RZXLoggerService.success("★ RZXPets Premium Edition Active: UNLIMITED Pets & Mechanics loaded!");
+        } else {
+            RZXLoggerService.warning("⚠ RZXPets Standard Edition Active: Enforcing Max " + maxPets + " Pets and Max " + maxMechanics + " Mechanics limits. Upgrade to Premium for UNLIMITED!");
+        }
+
         File petsFolder = new File(getDataFolder(), "pets");
         if (!petsFolder.exists()) {
             petsFolder.mkdirs();
@@ -446,6 +456,11 @@ public class RZXPets extends JavaPlugin implements RZXPlugin, CommandExecutor {
         File[] petFiles = petsFolder.listFiles((dir, name) -> name.endsWith(".yml") || name.endsWith(".yaml"));
         if (petFiles != null) {
             for (File file : petFiles) {
+                if (!isPremium && PetType.values().size() >= maxPets) {
+                    RZXLoggerService.warning("Standard Edition limit reached (" + maxPets + " Pets Max). Skipping " + file.getName() + ". Upgrade to Premium Edition for UNLIMITED pets!");
+                    break;
+                }
+
                 String name = file.getName();
                 YamlConfiguration config = YamlConfiguration.loadConfiguration(file);
                 boolean enabled = config.getBoolean("enabled", true);
@@ -467,6 +482,10 @@ public class RZXPets extends JavaPlugin implements RZXPlugin, CommandExecutor {
                 List<PetMechanic> mechanics = new java.util.ArrayList<>();
                 if (config.isList("mechanics")) {
                     for (Map<?, ?> rawMechanic : config.getMapList("mechanics")) {
+                        if (!isPremium && mechanics.size() >= maxMechanics) {
+                            RZXLoggerService.warning("Standard Edition limit reached (" + maxMechanics + " Mechanics Max per pet). Skipping further mechanics for " + name + ". Upgrade to Premium Edition for UNLIMITED mechanics!");
+                            break;
+                        }
                         try {
                             parseAndAddMechanic(rawMechanic, mechanics, name);
                         } catch (Exception e) {

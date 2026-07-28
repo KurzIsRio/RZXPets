@@ -46,6 +46,24 @@ storage:
   # The default number of pets a player can own without any rzxpets.limit.X permission
   default-limit: 1
 
+# Edition & License Settings
+# Set premium to true to enable Premium features locally, or use licensing server verification!
+# If false (Standard Edition), plugin will enforce max 5 registered pet types and max 10 mechanics limit.
+edition:
+  premium: true
+  standard-max-pets: 5
+  standard-max-mechanics: 10
+
+# License Verification Server Settings
+# Connects to your Python Discord License Bot server to verify active license keys online.
+licensing:
+  enabled: true
+  server-url: "http://127.0.0.1:8080/api/v1/verify"
+  license-key: "RZXP-PREM-8F92-3K1L"
+  timeout-seconds: 5
+  # Enable grace period cache so plugin stays in verified state during short bot restarts
+  grace-period-hours: 24
+
 # Pet Renaming Settings
 renaming:
   # Maximum length of custom pet names (excluding color prefixes)
